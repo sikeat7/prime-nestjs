@@ -1,12 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { UsersService } from './users.service';
 import { User } from './entities/user.entity';
 
 describe('UsersService', () => {
   let service: UsersService;
-  let repository: Repository<User>;
 
   const mockRepository = {
     save: jest.fn(),
@@ -27,7 +25,6 @@ describe('UsersService', () => {
     }).compile();
 
     service = module.get<UsersService>(UsersService);
-    repository = module.get<Repository<User>>(getRepositoryToken(User));
   });
 
   afterEach(() => {
@@ -91,6 +88,27 @@ describe('UsersService', () => {
 
       expect(mockRepository.findOne).toHaveBeenCalledWith({ where: { email } });
       expect(result).toEqual(user);
+    });
+  });
+
+  describe('findById', () => {
+    it('should return a user by id', async () => {
+      const user = { id: 1, name: 'Test User', email: 'test@example.com', password: 'hashedpassword' };
+
+      mockRepository.findOne.mockResolvedValue(user);
+
+      const result = await service.findById(1);
+
+      expect(mockRepository.findOne).toHaveBeenCalledWith({ where: { id: 1 } });
+      expect(result).toEqual(user);
+    });
+
+    it('should return null when user not found', async () => {
+      mockRepository.findOne.mockResolvedValue(null);
+
+      const result = await service.findById(999);
+
+      expect(result).toBeNull();
     });
   });
 
